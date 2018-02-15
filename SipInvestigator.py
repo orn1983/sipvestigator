@@ -6,7 +6,6 @@ import SipParser
 from glob import glob
 from Queue import Queue, Empty
 from SipInvestigatorFilter import FilterCLI
-from threading import Thread
 
 class MainCLI(cmd.Cmd):
 	"""CLI to investigate SIP correspondence"""
