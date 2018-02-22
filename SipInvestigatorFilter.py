@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import cmd
+from SipParser import SIPConversations
 
 class FilterCLI(cmd.Cmd):
 	"""Filter configurion sub CLI"""
@@ -30,12 +31,31 @@ class FilterCLI(cmd.Cmd):
 		# Default condition is or
 		condition = "or"
 
-		if "condition" in self.parent.filter:
+		if "condition" in flt:
 			condition = flt['condition']
+			if condition == "and":
+				convs = SIPConversations()
+				for conv in parent.conversations:
+					convs.add(parent.conversations[conv])
 
 		for arg in self.FILTER_ARGUMENTS:
 			if arg in flt:
-				if arg != "has":
+				if arg == "has":
+					for subarg in flt[arg]:
+						if subarg == "diversion":
+							func = convs.getByDiversion
+						elif subarg == "pai":
+							func = convs.getByPAI
+						elif subarg == "ppi":
+							func = convs.getByPPI
+						elif subarg == "rpid":
+							func = convs.getByRPID
+						elif subarg == "privacy":
+							func = convs.getByPrivacy
+
+						for k in func():
+							convs_flt.add(convs[k])
+				else:
 					if arg == "srcnum":
 						func = convs.getBySrcnum
 					elif arg == "dstnum":
@@ -56,22 +76,15 @@ class FilterCLI(cmd.Cmd):
 					for identifier in flt[arg]:
 						for k in func(identifier):
 							convs_flt.add(convs[k])
-				else:
-					for subarg in flt[arg]:
-						if subarg == "diversion":
-							func = convs.getByDiversion
-						elif subarg == "pai":
-							func = convs.getByPAI
-						elif subarg == "ppi":
-							func = convs.getByPPI
-						elif subarg == "rpid":
-							func = convs.getByRPID
-						elif subarg == "privacy":
-							func = convs.getByPrivacy
 
-						for k in func():
-							convs_flt.add(convs[k])
-
+				if condition == "and":
+					convs = SIPConversations()
+					for conv in convs_flt:
+						convs.add(convs_flt[conv])
+					convs_flt = SIPConversations()
+		if condition == "and":
+			convs_flt = convs
+			parent.conversations_filtered = convs_flt
 		parent.conversations_filtered_sorted = convs_flt.sorted()
 		print "%s conversations" % (len(convs_flt))
 		return True
