@@ -6,6 +6,7 @@ import SipParser
 from glob import glob
 from Queue import Queue, Empty
 from SipInvestigatorFilter import FilterCLI
+from threading import Thread, Event
 
 class MainCLI(cmd.Cmd):
 	"""CLI to investigate SIP correspondence"""
@@ -22,6 +23,9 @@ class MainCLI(cmd.Cmd):
 		self.conversations_sorted = []
 		self.conversations_filtered = SipParser.SIPConversations()
 		self.conversations_filtered_sorted = []
+		self.capture_queue = None
+		self.capture_stopper = None
+		self.capture_thread = None
 
 		if data != "":
 			self.do_load(data)
@@ -124,10 +128,25 @@ class MainCLI(cmd.Cmd):
 			return
 		if arg == "start":
 			print "Starting packet capture"
+			def capper(stopper, queue):
+				for message in SipParser.sniff_sip_messages(stopper, queue):
+					queue.put(message)
+
+                        self.capture_queue = Queue()
+                        self.capture_stopper = Event()
+			self.capture_thread = Thread(target=capper, args=(self.capture_stopper, self.capture_queue,))
+			self.capture_thread.daemon = True
+			self.capture_thread.start()
+		elif arg == "stop":
+			# TODO maybe update all the counters and data on the fly?
+			print "Stopping packet capture"
+			self.capture_stopper.set()
+			self.capture_thread.join()
 			num_conversations_before = len(self.conversations)
 			num_messages_before = sum(len(v.messages) for k, v in self.conversations.iteritems())
 
-			for message in SipParser.sniff_sip_messages():
+			while not self.capture_queue.empty():
+				message = self.capture_queue.get()
 				self.conversations.addMessage(message)
 
 			num_conversations_after = len(self.conversations)
@@ -136,12 +155,11 @@ class MainCLI(cmd.Cmd):
 			num_messages = num_messages_after - num_messages_before
 			self.conversations_sorted = self.conversations.sorted()
 			print "%s conversations (%s SIP messages) extracted" % (num_conversations, num_messages)
-		elif arg == "stop":
-			print "Stopping packet capture"
 
-		print "Applying filter %s... Result: " % (self.filter),
-		flt = FilterCLI(self)
-		flt._apply_filter()
+			if self.filter:
+				print "Applying filter %s... Result: " % (self.filter),
+				flt = FilterCLI(self)
+				flt._apply_filter()
 
 	def help_load(self):
 		print "Load SIP data from file. Accepted filetypes are .txt and .pcap"

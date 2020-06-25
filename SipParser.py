@@ -8,6 +8,7 @@ from datetime import datetime
 from socket import inet_ntoa
 from scapy.all import rdpcap, sniff
 from scapy.layers.inet import TCP, UDP, IP, ICMP
+from random import randint
 
 class SIPMessage:
 	def __init__(self, body="", header="", sdp=""):
@@ -706,15 +707,22 @@ def read_sip_messages(fh):
 	else:
 		return read_sip_messages_txt(fh)
 
-def sniff_sip_messages(iface=None):
+def sniff_sip_messages(stopper, iface=None):
 	packets = []
 	def process_pkt(pkt):
 		packets.append(pkt)
+	def should_stop(pkt):
+		if stopper.isSet():
+			return True
+		else:
+			return False
+
 	HDR_TEMPLATE = "%s IP %s.%s > %s.%s: SIP, length: %s\n"
+	counter = 0
 	if iface:
-		packets = sniff(iface, prn=process_pkt, store=1)
+		sniff(iface, prn=process_pkt, store=1, stop_filter=should_stop)
 	else:
-		packets = sniff(prn=process_pkt, store=1)
+		sniff(prn=process_pkt, store=1, stop_filter=should_stop)
 
 	for packet in packets:
 		if not (packet.haslayer(IP) and (packet.haslayer(TCP) or packet.haslayer(UDP))):
@@ -748,8 +756,6 @@ def sniff_sip_messages(iface=None):
 
 		body += "\r\n\r\n"
 		yield SIPMessage(body, header, sdp)
-
-
 	
 if __name__ == "__main__":
 	f = open(sys.argv[1])
