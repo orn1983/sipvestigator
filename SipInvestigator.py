@@ -117,7 +117,11 @@ class MainCLI(cmd.Cmd):
 		print "%s conversations (%s SIP messages) extracted" % (num_conversations, num_messages)
 
 	def do_capture(self, args):
-		arg = args.split()[0]
+		try:
+			arg = args.split()[0]
+		except IndexError:
+			self.printErr("Missing argument. Valid arguments: start | stop")
+			return
 		if arg == "start":
 			print "Starting packet capture"
 			num_conversations_before = len(self.conversations)
@@ -134,6 +138,10 @@ class MainCLI(cmd.Cmd):
 			print "%s conversations (%s SIP messages) extracted" % (num_conversations, num_messages)
 		elif arg == "stop":
 			print "Stopping packet capture"
+
+		print "Applying filter %s... Result: " % (self.filter),
+		flt = FilterCLI(self)
+		flt._apply_filter()
 
 	def help_load(self):
 		print "Load SIP data from file. Accepted filetypes are .txt and .pcap"
