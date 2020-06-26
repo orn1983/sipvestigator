@@ -97,9 +97,6 @@ class FilterCLI(cmd.Cmd):
 			self.prompt = "%s%s" % (self._prompt)
 			self.parent.prompt = "%s%s" % (self.parent._prompt)
 
-	def emptyline(self):
-		return
-
 	def do_add(self, args):
 		"""Add a filter condition"""
 		if len(args) == 0:

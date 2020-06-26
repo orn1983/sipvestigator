@@ -30,9 +30,6 @@ class MainCLI(cmd.Cmd):
 		if data != "":
 			self.do_load(data)
 
-	def emptyline(self):
-		return
-
 	def printErr(self, message):
 		print "*** Error! %s" % (message)
 
