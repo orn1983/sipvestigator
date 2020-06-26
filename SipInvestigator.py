@@ -156,7 +156,7 @@ class MainCLI(cmd.Cmd):
 			if self.filter:
 				print "Applying filter %s... Result: " % (self.filter),
 				flt = FilterCLI(self)
-				flt._apply_filter()
+				flt.apply_filter()
 
 	def help_load(self):
 		print "Load SIP data from file. Accepted filetypes are .txt and .pcap"

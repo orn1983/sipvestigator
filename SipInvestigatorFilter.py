@@ -16,7 +16,7 @@ class FilterCLI(cmd.Cmd):
 		self._prompt = ("SipInv[filter]", ": ")
 		self._update_prompts()
 
-	def _apply_filter(self):
+	def apply_filter(self):
 		parent = self.parent
 		flt = parent.filter
 		convs = parent.conversations
@@ -119,7 +119,7 @@ class FilterCLI(cmd.Cmd):
 			except KeyError:
 				self.parent.filter[ftype] = [fvalue]
 
-			self._apply_filter()
+			self.apply_filter()
 			return True
 
 		args = args.split()
@@ -178,7 +178,7 @@ class FilterCLI(cmd.Cmd):
 			return False
 
 		self.parent.filter[ftype] = values
-		self._apply_filter()
+		self.apply_filter()
 		self._update_prompts()
 
 	def complete_set(self, text, line, begidx, endidx):
@@ -210,7 +210,7 @@ class FilterCLI(cmd.Cmd):
 		except KeyError:
 			self.parent.printErr("No such filter: '%s'" % ftype)
 
-		self._apply_filter()
+		self.apply_filter()
 		self._update_prompts()
 
 	def do_help(self, arg):
@@ -273,7 +273,7 @@ class FilterCLI(cmd.Cmd):
 	def do_reset(self, args):
 		"""Remove all filter conditions"""
 		self.parent.filter = {}
-		self._apply_filter()
+		self.apply_filter()
 		self._update_prompts()
 
 	def do_show(self, args):
